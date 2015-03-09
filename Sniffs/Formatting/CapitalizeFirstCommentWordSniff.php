@@ -54,7 +54,7 @@ class Symfony2_Sniffs_Formatting_CapitalizeFirstCommentWordSniff implements PHP_
         $tokens = $phpcsFile->getTokens();
 
         if ($tokens[($stackPtr)]['code'] == T_COMMENT) {
-            if (preg_match('#(//\s?[a-z])#', $tokens[($stackPtr)]['content'])) {
+            if (preg_match('#(?<!http:)(//\s?[a-z])#', $tokens[($stackPtr)]['content'])) {
                 $phpcsFile->addError('An inline comment must be capitalized', $stackPtr, 'NoCapitalize');
             }
         }
