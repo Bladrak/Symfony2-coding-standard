@@ -73,24 +73,23 @@ class Symfony2_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commen
      *
      * @return void
      */
-    protected function processReturn($commentStart, $commentEnd)
+    protected function processReturn(PHP_CodeSniffer_File $phpcsFile, $stackPtr, $commentStart)
     {
-        if ($this->isInheritDoc()) {
+        if ($this->isInheritDoc($phpcsFile, $stackPtr)) {
             return;
         }
 
-        $tokens = $this->currentFile->getTokens();
-        $funcPtr = $this->currentFile->findNext(T_FUNCTION, $commentEnd);
+        $tokens = $phpcsFile->getTokens();
 
         // Only check for a return comment if a non-void return statement exists
-        if (isset($tokens[$funcPtr]['scope_opener'])) {
-            $start = $tokens[$funcPtr]['scope_opener'];
+        if (isset($tokens[$stackPtr]['scope_opener'])) {
+            $start = $tokens[$stackPtr]['scope_opener'];
 
             // iterate over all return statements of this function,
             // run the check on the first which is not only 'return;'
-            while ($returnToken = $this->currentFile->findNext(T_RETURN, $start, $tokens[$funcPtr]['scope_closer'])) {
+            while ($returnToken = $phpcsFile->findNext(T_RETURN, $start, $tokens[$stackPtr]['scope_closer'])) {
                 if ($this->isMatchingReturn($tokens, $returnToken)) {
-                    parent::processReturn($commentStart, $commentEnd);
+                    parent::processReturn($phpcsFile, $stackPtr, $commentStart);
                     break;
                 }
                 $start = $returnToken + 1;
@@ -104,9 +103,12 @@ class Symfony2_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commen
      *
      * @return boolean True if the comment is an inheritdoc
      */
-    protected function isInheritDoc ()
+    protected function isInheritDoc(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
     {
-        $content = $this->commentParser->getComment()->getContent();
+        $start = $phpcsFile->findPrevious(T_DOC_COMMENT_OPEN_TAG, $stackPtr - 1);
+        $end   = $phpcsFile->findNext(T_DOC_COMMENT_CLOSE_TAG, $start);
+
+        $content = $phpcsFile->getTokensAsString($start, ($end - $start));
 
         return preg_match('#{@inheritdoc}#i', $content) === 1;
     } // end isInheritDoc()
@@ -119,13 +121,13 @@ class Symfony2_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commen
      *
      * @return void
      */
-    protected function processParams($commentStart)
+    protected function processParams(PHP_CodeSniffer_File $phpcsFile, $stackPtr, $commentStart)
     {
-        if ($this->isInheritDoc()) {
+        if ($this->isInheritDoc($phpcsFile, $stackPtr)) {
             return;
         }
 
-        parent::processParams($commentStart);
+        parent::processParams($phpcsFile, $stackPtr, $commentStart);
     } // end processParams()
 
     /**
